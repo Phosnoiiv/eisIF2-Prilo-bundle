@@ -1,0 +1,66 @@
+name: Verify Lua
+on:
+  push:
+    paths:
+      - lua/original/**
+jobs:
+  verify-lua:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Restore cached Lua
+        id: restore-lua
+        uses: actions/cache/restore@v3
+        with:
+          path: lua-5.2.4/src/luac
+          key: ${{ runner.os }}-lua-5.2.4
+      - name: Install Lua
+        if: steps.restore-lua.outputs.cache-hit != 'true'
+        run: |
+          curl -o lua-5.2.4.tar.gz https://www.lua.org/ftp/lua-5.2.4.tar.gz
+          echo "b9e2e4aad6789b3b63a056d442f7b39f0ecfca3ae0f1fc0ae4e9614401b69f4b *lua-5.2.4.tar.gz" > sha256sum.txt
+          sha256sum -c sha256sum.txt
+          tar -xzf lua-5.2.4.tar.gz
+          make -C lua-5.2.4 linux
+      - name: Cache Lua
+        if: steps.restore-lua.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v3
+        with:
+          path: lua-5.2.4/src/luac
+          key: ${{ runner.os }}-lua-5.2.4
+      - name: Restore cached HonokaMiku
+        id: restore-honokamiku
+        uses: actions/cache/restore@v3
+        with:
+          path: honokamiku/HonokaMiku
+          key: ${{ runner.os }}-honokamiku
+      - name: Download HonokaMiku
+        if: steps.restore-honokamiku.outputs.cache-hit != 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: cyborgA0/SIF
+          path: honokamiku
+      - name: Compile HonokaMiku
+        if: steps.restore-honokamiku.outputs.cache-hit != 'true'
+        run: |
+          cd honokamiku
+          cmake -G "Unix Makefiles"
+          make
+      - name: Cache HonokaMiku
+        if: steps.restore-honokamiku.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v3
+        with:
+          path: honokamiku/HonokaMiku
+          key: ${{ runner.os }}-honokamiku
+      - name: No politics please
+        run: |
+          echo "::add-mask::Ukraine"
+          echo "::add-mask::ukraine"
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+      - name: Verify installations
+        run: |
+          lua-5.2.4/src/luac -v
+          honokamiku/HonokaMiku -v
+          php -v
