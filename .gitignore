@@ -1,0 +1,9 @@
+/console/vendor
+/console/.env
+
+# PhpStorm
+.idea/*
+# It is not possible to re-include a file if a parent directory of that file is excluded. (https://git-scm.com/docs/gitignore)
+!.idea/dictionaries
+.idea/dictionaries/*
+!.idea/dictionaries/PNI.xml

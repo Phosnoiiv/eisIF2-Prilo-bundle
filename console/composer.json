@@ -1,0 +1,20 @@
+{
+  "name": "everisay/prilo-bundle-console",
+  "require": {
+    "php": "8.3",
+    "symfony/console": "^6.4",
+    "symfony/filesystem": "^6.4",
+    "symfony/finder": "^6.4",
+    "symfony/process": "^6.4",
+    "spatie/temporary-directory": "^2.2"
+  },
+  "require-dev": {
+    "vlucas/phpdotenv": "^5.6"
+  },
+  "autoload": {
+    "psr-4": {
+      "EverISay\\Prilo\\Bundle\\Console\\": "./"
+    }
+  },
+  "minimum-stability": "stable"
+}

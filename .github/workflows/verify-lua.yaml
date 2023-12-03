@@ -12,7 +12,7 @@ jobs:
         uses: actions/cache/restore@v3
         with:
           path: lua-5.2.4/src/luac
-          key: ${{ runner.os }}-lua-5.2.4
+          key: ${{ runner.os }}-luac-5.2.4-32bit
       - name: Install Lua
         if: steps.restore-lua.outputs.cache-hit != 'true'
         run: |
@@ -20,13 +20,15 @@ jobs:
           echo "b9e2e4aad6789b3b63a056d442f7b39f0ecfca3ae0f1fc0ae4e9614401b69f4b *lua-5.2.4.tar.gz" > sha256sum.txt
           sha256sum -c sha256sum.txt
           tar -xzf lua-5.2.4.tar.gz
-          make -C lua-5.2.4 linux
+          sudo apt-get update
+          sudo apt-get install gcc-multilib lib32readline-dev
+          make -C lua-5.2.4 linux MYCFLAGS="-m32" MYLDFLAGS="-m32"
       - name: Cache Lua
         if: steps.restore-lua.outputs.cache-hit != 'true'
         uses: actions/cache/save@v3
         with:
           path: lua-5.2.4/src/luac
-          key: ${{ runner.os }}-lua-5.2.4
+          key: ${{ runner.os }}-luac-5.2.4-32bit
       - name: Restore cached HonokaMiku
         id: restore-honokamiku
         uses: actions/cache/restore@v3
@@ -60,7 +62,52 @@ jobs:
         with:
           php-version: '8.3'
       - name: Verify installations
+        id: verify-installations
         run: |
           lua-5.2.4/src/luac -v
           honokamiku/HonokaMiku -v
           php -v
+          echo "COMPOSER_CACHE_DIR=$(composer config -g cache-files-dir)" >> $GITHUB_OUTPUT
+      - name: Restore cached APK
+        id: restore-apk
+        uses: actions/cache/restore@v3
+        with:
+          path: lovelive-9.10.1.apk
+          key: apk-9.10.1
+      - name: Download APK
+        if: steps.restore-apk.outputs.cache-hit != 'true'
+        run: |
+          curl -o lovelive-9.10.1.apk ${{ secrets.PRILO_APK_ORIGINAL_URL }}
+          echo "6f270844d35cf8aa675f0f44046a515797b6a0c75471e19a463126aecdf7d9db *lovelive-9.10.1.apk" > sha256sum.txt
+          sha256sum -c sha256sum.txt
+      - name: Cache APK
+        if: steps.restore-apk.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v3
+        with:
+          path: lovelive-9.10.1.apk
+          key: apk-9.10.1
+      - name: Unzip APK
+        run: |
+          unzip -q lovelive-9.10.1.apk -d apk
+          unzip -q apk/assets/AppAssets.zip -d assets
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: this
+      - name: Cache Composer dependencies
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.verify-installations.outputs.COMPOSER_CACHE_DIR }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('this/console/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+      - name: Install Composer dependencies
+        run: |
+          cd this/console
+          composer install --no-dev -o
+      - name: Run verification
+        run: php this/console/pbc.php batch:lua
+        env:
+          PRILO_LUAC_PATH: ${{ github.workspace }}/lua-5.2.4/src/luac
+          PRILO_HONOKAMIKU_PATH: ${{ github.workspace }}/honokamiku/HonokaMiku
+          PRILO_APK_ASSETS_PATH: ${{ github.workspace }}/assets

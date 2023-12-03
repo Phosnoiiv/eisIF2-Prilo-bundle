@@ -1,0 +1,29 @@
+root = true
+
+[*.{lua,php,yaml,json,md}]
+indent_style = space
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.{lua,yaml,json}]
+indent_size = 2
+
+[*.php]
+indent_size = 4
+
+[.{editorconfig,gitignore,env}]
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# PhpStorm
+[*.php]
+ij_php_blank_lines_before_package = 0
+ij_php_blank_lines_after_package = 1
+ij_php_blank_lines_before_imports = 0
+ij_php_class_brace_style = end_of_line
+ij_php_method_brace_style = end_of_line
+ij_php_attributes_wrap = split_into_lines
